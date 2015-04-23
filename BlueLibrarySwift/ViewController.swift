@@ -44,6 +44,7 @@ class ViewController: UIViewController {
         
         // 3
         // the uitableview that presents the album data
+        
         dataTable.delegate = self
         dataTable.dataSource = self
         dataTable.backgroundView = nil
@@ -51,14 +52,19 @@ class ViewController: UIViewController {
         
         self.showDataForAlbum(currentAlbumIndex)
         
+        loadPreviousState()
+        
         scroller.delegate = self
         reloadScroller()
-        
-        
         //display the data.
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:"saveCurrentState", name: UIApplicationDidEnterBackgroundNotification, object: nil)
         
     }
     
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
     
     func reloadScroller() {
         allAlbums = LibraryAPI.sharedInstance.getAlbums()
@@ -93,6 +99,10 @@ class ViewController: UIViewController {
 		// Dispose of any resources that can be recreated.
 	}
     
+    func initialViewIndex(scroller: HorizontalScroller) -> Int {
+        return currentAlbumIndex
+    }
+    
     
 }
 
@@ -116,6 +126,19 @@ extension ViewController: UITableViewDataSource {
             }
         }
         return cell
+    }
+    
+    //MARK: Memento Pattern
+    func saveCurrentState() {
+        // When the user leaves the app and then comes back again, he wants it to be in the exact same state
+        // he left it. In order to do this we need to save the currently displayed album.
+        // Since it's only one piece of information we can use NSUserDefaults.
+        NSUserDefaults.standardUserDefaults().setInteger(currentAlbumIndex, forKey: "currentAlbumIndex")
+    }
+    
+    func loadPreviousState() {
+        currentAlbumIndex = NSUserDefaults.standardUserDefaults().integerForKey("currentAlbumIndex")
+        showDataForAlbum(currentAlbumIndex)
     }
     
 }
